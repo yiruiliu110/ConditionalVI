@@ -7,7 +7,9 @@ This repository contains the implementation for the paper "CATVI: Conditional an
 
 Current variational inference methods for hierar-chical Bayesian nonparametric models can nei-ther characterize the correlation structure amonglatent variables due to the mean-field setting, norinfer the true posterior dimension because of theuniversal  truncation.   To  overcome  these  limi-tations,  we  propose  the  conditional  and  adap-tively   truncated   variational   inference   method(CATVI) by maximizing the nonparametric ev-idence lower bound and integrating Monte Carlosampling into the stochastic variational inferenceframework.   CATVI  enjoys  several  advantagesover  traditional  variational  inference  methods,including  a  smaller  divergence  between  varia-tional  and  true  posteriors,  reduced  risk  of  un-derfitting or overfitting, and improved predictionaccuracy.    The  empirical  study  on  three  largedatasets,arXiv,New York TimesandWikipedia,reveals that CATVI applied in Bayesian nonpara-metric  topic  models  substantially  outperformsthe competitors in terms of lower perplexity andmuch clearer topic-words clustering.
 
+<img align="center" src="BNP_structure.PNG" alt="drawing" width="600">
 
+<img align="center" src="topic_word_results.PNG" alt="drawing" width="600">
 
 ## Requirements
 
