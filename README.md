@@ -14,11 +14,7 @@ Current variational inference methods for hierar-chical Bayesian nonparametric m
 Change your working directory to this main folder.
 
 CATVI requires Python 3.7+ and the following packages:
-numpy >= 1.11  
-scipy >= 1.6.1  
-pandas >= 0.18 
-scikit_learn >= 0.24  
-gensim >= 3.8.3  
+numpy >= 1.11   $~$ scipy >= 1.6.1   $~$ pandas >= 0.18  $~$ scikit_learn >= 0.24   $~$ gensim >= 3.8.3  
 
 
 ## Contributing
