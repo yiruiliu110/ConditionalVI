@@ -22,6 +22,12 @@ from gensim import utils, corpora
 from gensim.matutils import dirichlet_expectation, mean_absolute_difference
 from gensim.models.hdpmodel import HdpTopicFormatter
 
+import tensorflow as tf
+import tensorflow_probability as tfp
+
+
+tfd = tfp.distributions
+
 # the threshold for MCMC
 meanchangethresh = 0.0001
 warnings.filterwarnings("ignore")
@@ -94,7 +100,8 @@ class Global_Prior():
 
 class HdpModel_CATVI():
     def __init__(self, corpus, corpus_test, id2word, max_K=400,
-                 chunksize=256, kappa=1.0, tau=64.0, K=150, alpha=1, m_beta=1, m_gamma=1, print_freq=100):
+                 chunksize=256, kappa=1.0, tau=64.0, K=150, alpha=1, m_beta=1, m_gamma=1, print_freq=50,
+                 max_training_time=18000, max_training_epochs=1000):
 
         self.corpus = corpus
         self.id2word = id2word
@@ -123,37 +130,36 @@ class HdpModel_CATVI():
         self.result = pd.DataFrame(columns=['iter_no', 'K', "time", "likelihood", "perplexity"])
 
         self.print_freq = print_freq
+        self.max_training_time = max_training_time
+        self.max_training_epochs = max_training_epochs
 
-    def get_initial(self, m_lambda_init=0):
+        self.get_initial()
 
+    def get_initial(self):
         self.G_0 = Global_Prior(self.m_alpha, self.m_K, self.m_gamma, self.m_D, self.m_W, self.chunksize)
-
         self.effe_list = np.arange(self.m_K + 1)
-
         self.m_lambda = np.zeros((self.max_K + 1, self.m_W))
-
         self.m_dir_exp_lambda = np.exp(dirichlet_expectation(self.m_lambda + self.m_beta))
 
     def fit(self):
         self.start_time = round(time.process_time(), 0)
-
         self.read_test_data()
 
-        for chunk in utils.grouper(self.corpus, self.chunksize):
-            if self.finish_status():
-                try:
-                    self.read_text(chunk)
-                except:
-                    continue
-
-                self.update_chunk(chunk)
-            else:
-                print('Finish')
-                break
+        while self.finish_status():
+            for chunk in utils.grouper(self.corpus, self.chunksize):
+                if self.finish_status():
+                    try:
+                        self.read_text(chunk)
+                    except:
+                        continue
+                    self.update_chunk(chunk)
+                else:
+                    print('Finish')
+                    break
 
     def finish_status(self):
-
-        return self.time < 18000
+        return self.time < self.max_training_time \
+               and self.m_updatect < int(self.max_training_epochs * len(self.corpus) / self.chunksize)
 
     def get_likelihood(self):
         likelihood_total = 0
@@ -184,7 +190,6 @@ class HdpModel_CATVI():
         self.mat_z = {}
         self.mat_z_avrg = {}
         self.mat_z_sum = {}
-
         self.mat_phi = np.zeros((self.max_K + 1, self.chunk_doc_no))
 
         for i in range(self.chunk_doc_no):
@@ -195,7 +200,6 @@ class HdpModel_CATVI():
         # self.delete_empty_list(delete_list)
 
         self.rhot = pow(self.m_tau + self.m_updatect, -self.m_kappa)
-
         self.update_lambda(self.rhot)
         self.G_0.update_G_0(self.rhot, self.mat_phi[self.effe_list])
 
@@ -212,7 +216,6 @@ class HdpModel_CATVI():
         self.m_updatect += 1
 
     def update_doc(self, i, max_iter=500):
-
         self.mat_z[i] = np.zeros(((self.max_K + 1), self.chunk_doc_word_no[i]))
         self.mat_z_avrg[i] = np.copy(self.mat_z[i])
         self.mat_z_sum[i] = np.zeros((self.max_K + 1))
@@ -233,11 +236,8 @@ class HdpModel_CATVI():
             last_aver_sum = np.copy(aver_sum)
 
             self.gibbs_samplings(i, ids, cts, words_no, expElogbetad, max_iter=1)
-
             self.mat_z_avrg[i] -= 1 / iter * (self.mat_z_avrg[i] - self.mat_z[i])
-
             aver_sum -= 1 / iter * (last_aver_sum - self.mat_z_sum[i])
-
             aver_phi -= 1 / iter * (aver_phi - digamma(self.G_0.G_0 * self.m_gamma + self.mat_z_sum[i][self.effe_list]))
 
             iter += 1
@@ -281,7 +281,12 @@ class HdpModel_CATVI():
             a -= np.tile(cts, (self.m_K + 1, 1)) * self.mat_z[i][self.effe_list]
 
             mat = a * expElogbetad
-            pro_mat = normalize(mat, 'l1', axis=0)
+            try:
+                pro_mat = normalize(mat, 'l1', axis=0)
+            except:
+                print(a)
+                print(expElogbetad)
+                print(mat)
 
             mat_z = my_multinomial(pro_mat)
 
@@ -291,7 +296,6 @@ class HdpModel_CATVI():
             iter += 1
 
     def delete_empty_list(self, delete_list):
-
         delete_no = np.sum(delete_list)
 
         delete_list2 = self.effe_list[delete_list]
@@ -316,7 +320,6 @@ class HdpModel_CATVI():
                 self.mat_z_avrg[i][delete_list2] = np.zeros_like(self.mat_z_avrg[i][delete_list2])
 
     def update_lambda(self, rhot):
-
         self.m_lambda[self.effe_list] -= rhot * (self.m_lambda[self.effe_list])
 
         for i in range(self.chunk_doc_no):
@@ -329,7 +332,6 @@ class HdpModel_CATVI():
             dirichlet_expectation(self.m_lambda[self.effe_list] + self.m_beta))
 
     def vi(self, i, ids, cts, words_no, expElogbetad, no_iter=1000):
-
         alpha = self.G_0.G_0 * self.m_gamma
 
         gamma = np.ones(len(alpha))
@@ -443,76 +445,26 @@ class HdpModel_CATVI():
                 iter += 1
 
 
+    def output(self, number_of_topic=50, number_of_words_in_a_topic=20):
+        self.hdp_formatter = HdpTopicFormatter(self.id2word, self.m_lambda[model.effe_list])
+        self.hdp_formatter.show_topics(number_of_topic, number_of_words_in_a_topic)
+
+
 def find_gap_in_np_array(np_array, add_no):
     list_new = []
     iter = 1
     while (len(list_new) < add_no):
         if iter not in np_array:
             list_new.append(iter)
-
         iter += 1
 
     return list_new
 
 
 def my_multinomial(probabilities):
+    probabilities = np.absolute(probabilities) + 1.e-5
+    probabilities = probabilities / np.sum(probabilities, 0)
     for i in range(probabilities.shape[1]):
         probabilities[:, i] = np.random.multinomial(n=1, pvals=probabilities[:, i])
     return probabilities
 
-
-if __name__ == '__main__':
-    directory = sys.argv[1]
-    data_path = directory + '/data'
-    save_path = directory + '/result_catvi'
-    id2word = corpora.Dictionary.load_from_text(data_path + "/_wordids.txt.bz2")
-    mm = corpora.MmCorpus(data_path + "/_bow.mm")
-    print(mm)
-
-    index_train = np.load(data_path + '/index_train.npy')
-    index_test = np.load(data_path + '/index_test.npy')
-
-    model = HdpModel_CATVI(corpus=mm[index_train], corpus_test=mm[index_test], id2word=id2word, max_K=400,
-                           chunksize=256, kappa=0.6, tau=64, K=100, alpha=5, m_beta=5, m_gamma=5)
-    model.get_initial()
-    model.fit()
-
-    hdp_formatter = HdpTopicFormatter(model.id2word, model.m_lambda[model.effe_list])
-
-    np.save(save_path + '/G_0', model.G_0.G_0)
-
-    model.result.index.name = 'iter_no'
-    model.result.to_csv(save_path + '/cvi.csv')
-
-    dictionary = {}
-    with open(data_path + '/diffs.txt') as f:
-        for line in f.readlines():
-            pair = line.split()
-
-            try:
-                stemmed = pair[1]
-                natural = pair[0]
-            except:
-                continue
-            try:
-                dictionary[stemmed] = dictionary[stemmed] + [natural]
-            except:
-                dictionary[stemmed] = [natural]
-
-    Topics = pd.DataFrame(columns=np.arange(30))
-
-    for item in hdp_formatter.show_topics(500, 30):
-        text = item[1]
-        text = utils.to_unicode(text, 'utf8')
-        text = text.translate(str.maketrans('', '', string.punctuation))
-        text = text.translate(str.maketrans('', '', string.digits))
-        text_natural = ' '
-        for word in text.split():
-            try:
-                text_natural += (dictionary[word][0]) + ' '
-            except:
-                text_natural += word + ' '
-
-        Topics.loc[item[0]] = text_natural.split()
-
-    Topics.to_csv(save_path + '/topics.csv')
