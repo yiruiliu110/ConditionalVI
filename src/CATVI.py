@@ -94,7 +94,7 @@ class Global_Prior():
 
 class HdpModel_CATVI():
     def __init__(self, corpus, corpus_test, id2word, max_K=400,
-                 chunksize=256, kappa=1.0, tau=64.0, K=150, alpha=1, m_beta=1, m_gamma=1):
+                 chunksize=256, kappa=1.0, tau=64.0, K=150, alpha=1, m_beta=1, m_gamma=1, print_freq=100):
 
         self.corpus = corpus
         self.id2word = id2word
@@ -122,6 +122,8 @@ class HdpModel_CATVI():
 
         self.result = pd.DataFrame(columns=['iter_no', 'K', "time", "likelihood", "perplexity"])
 
+        self.print_freq = print_freq
+
     def get_initial(self, m_lambda_init=0):
 
         self.G_0 = Global_Prior(self.m_alpha, self.m_K, self.m_gamma, self.m_D, self.m_W, self.chunksize)
@@ -132,24 +134,20 @@ class HdpModel_CATVI():
 
         self.m_dir_exp_lambda = np.exp(dirichlet_expectation(self.m_lambda + self.m_beta))
 
-    def update(self):
-
+    def fit(self):
         self.start_time = round(time.process_time(), 0)
 
         self.read_test_data()
 
         for chunk in utils.grouper(self.corpus, self.chunksize):
             if self.finish_status():
-
                 try:
                     self.read_text(chunk)
-
                 except:
                     continue
 
                 self.update_chunk(chunk)
             else:
-
                 print('Finish')
                 break
 
@@ -201,18 +199,17 @@ class HdpModel_CATVI():
         self.update_lambda(self.rhot)
         self.G_0.update_G_0(self.rhot, self.mat_phi[self.effe_list])
 
-        self.m_updatect += 1
-
         end_time = round(time.process_time(), 0)
         used_time = end_time - start_time
         self.time += used_time
 
-        lilelihood = round(self.get_likelihood(), 6)
-        result = [self.m_updatect, self.m_K, self.time, lilelihood, round(np.exp(-lilelihood), 2)]
+        if self.m_updatect % self.print_freq == 0:
+            lilelihood = round(self.get_likelihood(), 6)
+            result = [self.m_updatect, self.m_K, self.time, lilelihood, round(np.exp(-lilelihood), 2)]
+            self.result.loc[self.m_updatect] = result
+            print(self.result.tail(1))
 
-        self.result.loc[self.m_updatect] = result
-
-        print(self.result.tail(1))
+        self.m_updatect += 1
 
     def update_doc(self, i, max_iter=500):
 
@@ -478,7 +475,7 @@ if __name__ == '__main__':
     model = HdpModel_CATVI(corpus=mm[index_train], corpus_test=mm[index_test], id2word=id2word, max_K=400,
                            chunksize=256, kappa=0.6, tau=64, K=100, alpha=5, m_beta=5, m_gamma=5)
     model.get_initial()
-    model.update()
+    model.fit()
 
     hdp_formatter = HdpTopicFormatter(model.id2word, model.m_lambda[model.effe_list])
 
