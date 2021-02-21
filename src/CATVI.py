@@ -6,13 +6,10 @@ from __future__ import with_statement
 
 import time
 import warnings
-import sys
-import string
 
 import numpy as np
 import pandas as pd
 
-from scipy.stats import multinomial, dirichlet
 from scipy.special import digamma
 
 from sklearn.preprocessing import normalize
@@ -100,8 +97,8 @@ class Global_Prior():
 
 class HdpModel_CATVI():
     def __init__(self, corpus, corpus_test, id2word, max_K=400,
-                 chunksize=256, kappa=1.0, tau=64.0, K=150, alpha=1, m_beta=1, m_gamma=1, print_freq=50,
-                 max_training_time=18000, max_training_epochs=1000):
+                 chunksize=256, kappa=1.0, tau=64.0, K=20, alpha=1, m_beta=1, m_gamma=1, print_freq=50,
+                 max_training_time=18000, max_training_epochs=100):
 
         self.corpus = corpus
         self.id2word = id2word
@@ -444,8 +441,7 @@ class HdpModel_CATVI():
 
                 iter += 1
 
-
-    def output(self, number_of_topic=50, number_of_words_in_a_topic=20):
+    def output(self, number_of_topic=20, number_of_words_in_a_topic=20):
         self.hdp_formatter = HdpTopicFormatter(self.id2word, self.m_lambda[model.effe_list])
         self.hdp_formatter.show_topics(number_of_topic, number_of_words_in_a_topic)
 
@@ -462,7 +458,7 @@ def find_gap_in_np_array(np_array, add_no):
 
 
 def my_multinomial(probabilities):
-    probabilities = np.absolute(probabilities) + 1.e-5
+    probabilities = np.absolute(probabilities) + 1.e-15
     probabilities = probabilities / np.sum(probabilities, 0)
     for i in range(probabilities.shape[1]):
         probabilities[:, i] = np.random.multinomial(n=1, pvals=probabilities[:, i])
