@@ -9,6 +9,20 @@ Current variational inference methods for hierar-chical Bayesian nonparametric m
 
 <img align="center" src="topic_word_results.PNG" alt="drawing" width="600">
 
+## Usage
+Here is a small example to use CATVI (Python 3):
+
+```python
+from src.CATVI import HdpModel_CATVI
+
+model = HdpModel_CATVI(corpus=corpus[index_train], corpus_test=corpus[index_test], id2word=id2word)
+
+model.fit()
+
+model.output()
+```
+See [the tutorial](https://github.com/yiruiliu110/ConditionalVI/blob/master/tutorial/train_hdp_catvi.ipynb) for more details.
+
 ## Requirements
 
 Change your working directory to this main folder.
