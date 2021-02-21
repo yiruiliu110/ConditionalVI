@@ -123,7 +123,7 @@ model.output()
      (18,
       '0.011*star + 0.005*bifurcation + 0.004*contour + 0.003*efficiency + 0.003*cun + 0.003*xy + 0.002*ej + 0.002*ascent + 0.002*contralateral + 0.002*coincidence + 0.002*conflict + 0.002*policy + 0.002*macroscopic + 0.002*station + 0.002*positioning + 0.002*laplacian + 0.002*connection_strength + 0.002*orientation_tuning + 0.002*pas + 0.002*profile'),
      (19,
-      '0.008*cone + 0.006*interspike + 0.003*grouping + 0.003*vertex + 0.003*list + 0.003*large_vocabulary + 0.003*epsp + 0.002*merging + 0.002*inferred + 0.002*mlp + 0.002*survival + 0.002*relevance + 0.002*motion + 0.002*recording + 0.002*hz + 0.002*cluster + 0.002*mead + 0.002*delta + 0.002*reaching + 0.002*flat'))]
+      '0.008*cone + 0.006*interspike + 0.003*grouping + 0.003*vertex + 0.003*list + 0.003*large_vocabulary + 0.003*epsp + 0.002*merging + 0.002*inferred + 0.002*mlp + 0.002*survival + 0.002*relevance + 0.002*motion + 0.002*recording + 0.002*hz + 0.002*cluster + 0.002*mead + 0.002*delta + 0.002*reaching + 0.002*flat')]
 
 
 
