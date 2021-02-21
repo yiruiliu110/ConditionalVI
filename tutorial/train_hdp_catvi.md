@@ -74,7 +74,7 @@ model.fit()
     400    400.0  80.0  7592.0   -8.350632     4232.86
     
 
-print to topic_word clustering result
+print the topic_word clustering result
 
 
 ```python
