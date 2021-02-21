@@ -1,6 +1,6 @@
 ## Training
 
-loading data: The processed data should be stored in .mm and .txt. See tutorial/data_procesing.ipynb for details.
+loading data: The processed data should be stored in .mm and .txt. See [the tutorial of data preprocesing](https://github.com/yiruiliu110/ConditionalVI/blob/master/tutorial/data_processing.md) for details.
 
 Please note that this dataset that contains 1740 documents is only used for tutorial. The real application of HDP required much larger dataset.
 
