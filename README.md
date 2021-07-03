@@ -1,7 +1,7 @@
 # 
 # CATVI: Conditional and Adaptively Truncated Variational Inference for Hierarchical Bayesian Nonparametric Models
 
-This repository contains the implementation for the paper "CATVI: Conditional and Adaptively Truncated Variational Inference for Hierarchical Bayesian Nonparametric Models" (submitted to ICML 2021) in Python.
+This repository contains the implementation for the paper "CATVI: Conditional and Adaptively Truncated Variational Inference for Hierarchical Bayesian Nonparametric Models" (submitted to NIPS2021) in Python.
 
 ## Summary of the paper
 
