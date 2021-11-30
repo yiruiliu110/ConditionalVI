@@ -21,7 +21,7 @@ model.fit()
 
 model.output()
 ```
-See [the tutorial](https://github.com/yiruiliu110/ConditionalVI/blob/master/tutorial/train_hdp_catvi.md) for more details.
+See /tutorial/train_hdp_catvi.md for more details.
 
 ## Requirements
 
