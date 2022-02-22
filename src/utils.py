@@ -199,14 +199,15 @@ def variable_parser(var_list, prefix):
   return ret_list
 
 
-def create_seq_data_set_new(data):
+def create_seq_data_set_new(data_raw):
     data = [] # [[id1, id2, ...], ..., [id_k, ...]
     doc_word_count = [] # [word_count1, word_count2, ...], store the length of each doc
-    for doc in chunk:
+
+    for doc in data_raw:
 
         doc_word_ids, doc_word_counts = zip(*doc)
 
-        current_doc = list(itertools.chain(*[[doc_word_id] * doc_word_count for (doc_word_id, doc_word_count) in zip(doc_word_ids, doc_word_counts)]))# store the ids to represent a doc
+        current_doc = list(itertools.chain(*[[doc_word_id] * int(doc_word_count) for (doc_word_id, doc_word_count) in zip(doc_word_ids, doc_word_counts)]))# store the ids to represent a doc
         word_count = len(current_doc) # number of words in the doc
 
         data.append(current_doc)

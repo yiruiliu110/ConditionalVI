@@ -2,7 +2,8 @@
 Reference: https://github.com/linkstrife/HDP Lihui Lin. School of Data and Computer Science, Sun Yat-sen University
 """
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
 import tensorflow_probability as tfp
 import numpy as np
 import codecs
@@ -51,8 +52,8 @@ def corpus_level_G(K, gamma, eta):
     mix_components = tfp.distributions.Dirichlet(eta, validate_args=True).sample() # K samples from the base measure H (sym. Dir(eta))
     beta = tfp.distributions.Beta(np.ones(K), m_gamma).sample() # top layer betas (beta')
     with tf.Session():
-        m_components = mix_components.eval()
-        m_beta = beta.eval()
+        m_components = mix_components.numpy()
+        m_beta = beta.numpy()
         stick_remain = 1.0
 
         for k in range(K):
@@ -85,7 +86,7 @@ def document_level_G(G0, alpha):
     pi = tfp.distributions.Beta(m_alpha * betas, m_alpha * betas_sum).sample() # top layer betas (beta')
 
     with tf.Session():
-        m_pi = pi.eval()
+        m_pi = pi.numpy()
         stick_remain = 1.0
 
         for k in range(K):
@@ -127,7 +128,7 @@ def inference(Iter, GibbsIter, data_set, vocab_size, word_count, gamma, eta, alp
                     t_list = np.zeros(K, dtype=np.int32) # random initialization with table 1
                     t_list[K-1] = 1
                     t_table = np.zeros((GibbsIter, K))
-                    print("Epoch {:d} | Sampling table for token {:s}...".format(epoch_iter+1, token))
+                    print("Epoch {:d} | Sampling table for token {:d}...".format(epoch_iter+1, token))
 
                     # —————— Gibbs Sampling for Tables ——————
                     for it in range(GibbsIter + burn_in):
@@ -233,7 +234,7 @@ def gibbs_sampling_topic(GibbsIter, Gamma, topic_word_matrix):
 
 
 def get_perplexity(text_data, doc_topic_mat, topic_word_mat, word_count):
-    global_topic_dist = np.zeros((1,len(doc_topic_mat[1])))
+    global_topic_dist = np.zeros((1,len(doc_topic_mat[0])))
     global_topic_dist[0] = normalize_single_row(np.sum(doc_topic_mat, axis=0))
     for d, doc_topic in enumerate(doc_topic_mat):
         doc_topic_mat[d] = doc_topic/np.linalg.norm(doc_topic, ord=1)
@@ -245,7 +246,7 @@ def get_perplexity(text_data, doc_topic_mat, topic_word_mat, word_count):
     sum_log_pw = 0.0
     for d, doc in enumerate(text_data):
         for t, token in enumerate(doc):
-            sum_log_pw += np.log(p_wd[d, t])
+            sum_log_pw += np.log(p_wd[d, t] + + 1e-10)
     perplexity = np.exp(-1 * sum_log_pw / np.sum(word_count))
 
     return np.around(perplexity, decimals=3)
@@ -261,6 +262,7 @@ class hdpModel(object):
         self.eta = eta
 
         self.data, self.word_count = utils.create_seq_data_set_new(data)
+
         self.word_id_dict = utils.load_word_id(vocab_path)
         self.vocab_size = vocab_size
 
@@ -318,7 +320,7 @@ if __name__ == '__main__':
     burn-in: number of early samples to be truncated
     The last two parameters are data set path and vocabulary size respectively
     """
-    num_topic = 10
+    num_topic = 500
     gamma = 1.5
     eta = 0.01
     alpha = 1.0
@@ -328,15 +330,16 @@ if __name__ == '__main__':
 
 
     from gensim import corpora
-    folder_path = "C:\\Users\\yirui\\OneDrive\ -\ London\ School\ of\ Economics\\CATVI"
+    folder_path = "C:\\Users\\yirui\\OneDrive - London School of Economics\\CATVI"
     corpus = corpora.MmCorpus(folder_path + "\\arXiV" + "\\data\\_bow.mm")
 
     from sklearn.model_selection import train_test_split
-    index_train, index_test = train_test_split(list(range(len(corpus))), test_size=2000)
+    index_train, index_test = train_test_split(list(range(len(corpus))), test_size=500)
 
     data = corpus[index_test]
+    print(corpus)
 
     vocab_path = folder_path + "\\arXiV" + "\\data\\ladc.vocab"
 
-    hdp = hdpModel(num_topic, gamma, eta, alpha, epoch, gibbs_iter, burn_in, data, 2000, vocab_path)
+    hdp = hdpModel(num_topic, gamma, eta, alpha, epoch, gibbs_iter, burn_in, data, corpus.num_terms, vocab_path)
     hdp.print_topics(5, 10) # required #topics & #topic words
