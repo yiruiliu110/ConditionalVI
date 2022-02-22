@@ -246,7 +246,7 @@ def get_perplexity(text_data, doc_topic_mat, topic_word_mat, word_count):
     sum_log_pw = 0.0
     for d, doc in enumerate(text_data):
         for t, token in enumerate(doc):
-            sum_log_pw += np.log(p_wd[d, t] + + 1e-10)
+            sum_log_pw += np.log(p_wd[d, t] + + 1e-4)
     perplexity = np.exp(-1 * sum_log_pw / np.sum(word_count))
 
     return np.around(perplexity, decimals=3)
@@ -331,7 +331,7 @@ if __name__ == '__main__':
 
     from gensim import corpora
     folder_path = "C:\\Users\\yirui\\OneDrive - London School of Economics\\CATVI"
-    corpus = corpora.MmCorpus(folder_path + "\\arXiV" + "\\data\\_bow.mm")
+    corpus = corpora.MmCorpus(folder_path + "\\NYT" + "\\data\\_bow.mm")
 
     from sklearn.model_selection import train_test_split
     index_train, index_test = train_test_split(list(range(len(corpus))), test_size=500)
@@ -339,7 +339,7 @@ if __name__ == '__main__':
     data = corpus[index_test]
     print(corpus)
 
-    vocab_path = folder_path + "\\arXiV" + "\\data\\ladc.vocab"
+    vocab_path = folder_path + "\\NYT" + "\\data\\ladc.vocab"
 
     hdp = hdpModel(num_topic, gamma, eta, alpha, epoch, gibbs_iter, burn_in, data, corpus.num_terms, vocab_path)
     hdp.print_topics(5, 10) # required #topics & #topic words
